@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A3</title>
+    <title>Conéctate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -27,6 +27,78 @@
         .hidden {
             display: none;
         }
+        /* Estilos para el chat flotante */
+        #chatContainer {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 90%;
+            max-width: 400px;
+            height: 500px;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            z-index: 999;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #chatContainer.show {
+            transform: translateY(0);
+        }
+        .chat-header {
+            background-color: #1e40af;
+            color: white;
+            padding: 1rem;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+        }
+        .chat-body {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .chat-message {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .chat-message.self {
+            background-color: #bfdbfe;
+            align-self: flex-end;
+        }
+        .chat-message.other {
+            background-color: #e2e8f0;
+            align-self: flex-start;
+        }
+        .popup-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 2rem;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .popup-box.visible {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body>
@@ -40,8 +112,8 @@
 
     <div id="loginRegisterContainer" class="hidden min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Crea o Inicia Sesión</h1>
-            <p class="text-gray-600 text-center mb-8">Debes ser mayor de 18 años para acceder.</p>
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">¡Bienvenido!</h1>
+            <p class="text-gray-600 text-center mb-8">Crea una cuenta o inicia sesión para conectarte.</p>
             <div class="space-y-4">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -50,6 +122,10 @@
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
                     <input type="password" id="password" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="********">
+                </div>
+                <div>
+                    <label for="nickname" class="block text-sm font-medium text-gray-700">Apodo</label>
+                    <input type="text" id="nickname" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: Amig@">
                 </div>
                 <div>
                     <label for="birthdate" class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
@@ -109,7 +185,12 @@
                 <h1 class="text-2xl font-bold text-gray-800">Perfiles Disponibles</h1>
                 <p id="currentUserId" class="text-sm text-gray-500 mt-1"></p>
             </div>
-            <button id="logoutBtn" class="py-2 px-4 rounded-md font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-300">Cerrar Sesión</button>
+            <div class="flex items-center space-x-4">
+                <button id="toggleChatBtn" class="py-2 px-4 rounded-md font-semibold text-white bg-green-500 hover:bg-green-600 transition duration-300">
+                    <i class="fas fa-comment-dots"></i> Chat
+                </button>
+                <button id="logoutBtn" class="py-2 px-4 rounded-md font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-300">Cerrar Sesión</button>
+            </div>
         </header>
         <div id="profilesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
             <!-- Los perfiles se renderizarán aquí -->
@@ -124,11 +205,44 @@
             <button id="cancelReportBtn" class="py-2 px-4 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition duration-300">Cancelar</button>
         </div>
     </div>
+
+    <!-- Mensaje de bienvenida -->
+    <div id="welcomeBox" class="popup-box hidden">
+        <h3 class="text-2xl font-bold mb-2 text-gray-800">¡Bienvenido!</h3>
+        <p id="welcomeMessage" class="text-xl text-gray-600 mb-6"></p>
+        <button id="closeWelcomeBtn" class="py-2 px-6 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 transition duration-300">Empezar</button>
+    </div>
+
+    <!-- Advertencia de seguridad -->
+    <div id="disclaimerBox" class="popup-box hidden">
+        <h3 class="text-2xl font-bold mb-4 text-red-600">¡Advertencia de Seguridad!</h3>
+        <p class="text-gray-700 mb-6">Este sitio web no se responsabiliza por las interacciones entre usuarios. Por tu seguridad, te recomendamos:</p>
+        <ul class="list-disc list-inside text-left text-gray-600 mb-6 space-y-2">
+            <li>No realizar transferencias de dinero.</li>
+            <li>No revelar información bancaria o muy personal.</li>
+            <li>Usar el chat con prudencia.</li>
+        </ul>
+        <button id="closeDisclaimerBtn" class="py-2 px-6 rounded-md font-semibold text-white bg-red-600 hover:bg-red-700 transition duration-300">Entendido</button>
+    </div>
+
+    <div id="chatContainer" class="hidden">
+        <div class="chat-header flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Chat Público</h3>
+            <button id="closeChatBtn" class="text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="chatBody" class="chat-body">
+            <!-- Mensajes se renderizarán aquí -->
+        </div>
+        <div class="chat-input flex space-x-2">
+            <input type="text" id="chatMessageInput" class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Escribe un mensaje...">
+            <button id="sendChatBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Establecer el nivel de registro para depuración
@@ -150,6 +264,7 @@
         const profileListContainer = document.getElementById('profileListContainer');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
+        const nicknameInput = document.getElementById('nickname');
         const birthdateInput = document.getElementById('birthdate');
         const genderSelect = document.getElementById('gender');
         const registerBtn = document.getElementById('registerBtn');
@@ -169,9 +284,23 @@
         const reportConfirmBox = document.getElementById('reportConfirmBox');
         const confirmReportBtn = document.getElementById('confirmReportBtn');
         const cancelReportBtn = document.getElementById('cancelReportBtn');
+        const toggleChatBtn = document.getElementById('toggleChatBtn');
+        const chatContainer = document.getElementById('chatContainer');
+        const closeChatBtn = document.getElementById('closeChatBtn');
+        const chatBody = document.getElementById('chatBody');
+        const chatMessageInput = document.getElementById('chatMessageInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+
+        // Referencias de los nuevos elementos
+        const welcomeBox = document.getElementById('welcomeBox');
+        const welcomeMessageElement = document.getElementById('welcomeMessage');
+        const closeWelcomeBtn = document.getElementById('closeWelcomeBtn');
+        const disclaimerBox = document.getElementById('disclaimerBox');
+        const closeDisclaimerBtn = document.getElementById('closeDisclaimerBtn');
 
         let userProfileData = null;
         let profileToReportId = null;
+        let isChatOpen = false;
 
         // Lista de distritos de Lima y Callao
         const limaDistricts = [
@@ -283,6 +412,8 @@
             profileListContainer.classList.remove('hidden');
             currentUserIdDisplay.textContent = `Tu ID de usuario: ${userId}`;
             setupProfileListener();
+            setupChatListener();
+            showWelcomeAndDisclaimer();
         }
 
         function showLoginRegister() {
@@ -304,10 +435,11 @@
         registerBtn.addEventListener('click', async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
+            const nickname = nicknameInput.value;
             const birthdate = birthdateInput.value;
             const gender = genderSelect.value;
             
-            if (!email || !password || !birthdate) {
+            if (!email || !password || !birthdate || !nickname) {
                 showMessage("Por favor, completa todos los campos.");
                 return;
             }
@@ -339,6 +471,7 @@
 
                 const profileData = {
                     email: email,
+                    nickname: nickname,
                     gender: gender,
                     birthdate: birthdate,
                     createdAt: new Date().toISOString()
@@ -428,15 +561,21 @@
                 }
 
                 profileCard.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-gray-800">${profile.email.split('@')[0]}</h2>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <img class="w-16 h-16 rounded-full border-2 border-gray-200" src="https://placehold.co/150x150/e0e7ff/4338ca?text=${profile.nickname.charAt(0).toUpperCase()}" alt="Avatar de ${profile.nickname}">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">${profile.nickname}</h2>
+                            <p class="text-sm text-gray-500">${profile.email}</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mt-2">Género: ${profile.gender}</p>
+                    ${contactInfo}
+                    <div class="mt-auto pt-4 flex justify-between items-center">
+                        <p class="text-sm text-gray-400">ID: ${profile.id.substring(0, 8)}...</p>
                         <button class="report-btn text-red-500 hover:text-red-700 transition duration-300" data-profile-id="${profile.id}">
                             <i class="fas fa-flag"></i>
                         </button>
                     </div>
-                    <p class="text-gray-600 mt-2">Género: ${profile.gender}</p>
-                    ${contactInfo}
-                    <p class="text-sm text-gray-400 mt-auto pt-4">ID: ${profile.id}</p>
                 `;
                 fragment.appendChild(profileCard);
             });
@@ -460,7 +599,10 @@
             onSnapshot(q, (snapshot) => {
                 const allProfiles = [];
                 snapshot.forEach((doc) => {
-                    allProfiles.push({ id: doc.id, ...doc.data() });
+                    // Excluir el perfil del usuario actual de la lista
+                    if (doc.id !== auth.currentUser.uid) {
+                        allProfiles.push({ id: doc.id, ...doc.data() });
+                    }
                 });
                 
                 let filteredProfiles = [];
@@ -507,6 +649,104 @@
             reportConfirmBox.classList.add('hidden');
             profileToReportId = null;
         });
+
+        // Lógica del chat
+        toggleChatBtn.addEventListener('click', () => {
+            isChatOpen = !isChatOpen;
+            chatContainer.classList.toggle('show');
+            if (isChatOpen) {
+                chatContainer.classList.remove('hidden');
+                chatBody.scrollTop = chatBody.scrollHeight; // Desplazarse al final
+            } else {
+                 setTimeout(() => chatContainer.classList.add('hidden'), 300);
+            }
+        });
+
+        closeChatBtn.addEventListener('click', () => {
+            isChatOpen = false;
+            chatContainer.classList.remove('show');
+            setTimeout(() => chatContainer.classList.add('hidden'), 300);
+        });
+
+        sendChatBtn.addEventListener('click', sendMessage);
+        chatMessageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const messageText = chatMessageInput.value.trim();
+            if (messageText === '') return;
+
+            try {
+                await addDoc(collection(db, `/artifacts/${appId}/public/data/chat`), {
+                    userId: auth.currentUser.uid,
+                    nickname: userProfileData.nickname,
+                    message: messageText,
+                    timestamp: serverTimestamp()
+                });
+                chatMessageInput.value = '';
+                chatBody.scrollTop = chatBody.scrollHeight; // Desplazarse al final
+            } catch (error) {
+                console.error("Error al enviar el mensaje:", error);
+                showMessage("No se pudo enviar el mensaje.", true);
+            }
+        }
+
+        function setupChatListener() {
+            const chatCollectionRef = collection(db, `/artifacts/${appId}/public/data/chat`);
+            const q = query(chatCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                chatBody.innerHTML = '';
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push(doc.data());
+                });
+                
+                // Ordenar mensajes por timestamp para asegurar el orden correcto
+                messages.sort((a, b) => a.timestamp?.toMillis() - b.timestamp?.toMillis());
+
+                messages.forEach(msg => {
+                    const isSelf = msg.userId === auth.currentUser.uid;
+                    const messageElement = document.createElement('div');
+                    messageElement.className = `chat-message ${isSelf ? 'self' : 'other'}`;
+                    
+                    const senderName = isSelf ? 'Tú' : msg.nickname;
+                    messageElement.innerHTML = `<span class="font-bold">${senderName}:</span> ${msg.message}`;
+                    chatBody.appendChild(messageElement);
+                });
+
+                // Mantener el chat desplazado hacia abajo
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, (error) => {
+                console.error("Error al obtener los mensajes del chat:", error);
+            });
+        }
+        
+        // Función para mostrar los mensajes de bienvenida y de seguridad
+        function showWelcomeAndDisclaimer() {
+            // Mostrar mensaje de bienvenida
+            welcomeMessageElement.textContent = `¡Nos alegra tenerte aquí, ${userProfileData.nickname}!`;
+            welcomeBox.classList.remove('hidden');
+            setTimeout(() => welcomeBox.classList.add('visible'), 50);
+
+            closeWelcomeBtn.addEventListener('click', () => {
+                welcomeBox.classList.remove('visible');
+                setTimeout(() => {
+                    welcomeBox.classList.add('hidden');
+                    // Después de cerrar el de bienvenida, mostrar el de seguridad
+                    disclaimerBox.classList.remove('hidden');
+                    setTimeout(() => disclaimerBox.classList.add('visible'), 50);
+                }, 500);
+            }, { once: true }); // Usar `once: true` para que el listener se elimine solo
+
+            closeDisclaimerBtn.addEventListener('click', () => {
+                disclaimerBox.classList.remove('visible');
+                setTimeout(() => disclaimerBox.classList.add('hidden'), 500);
+            }, { once: true });
+        }
     </script>
 </body>
 </html>
