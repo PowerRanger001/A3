@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conéctate</title>
+    <title>A3</title>
+    <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font from Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        /* General body styling for a clean look */
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            color: #333;
         }
+
+        /* Custom message box for user feedback, avoiding native alerts */
         .message-box {
             position: fixed;
             top: 50%;
@@ -24,10 +31,39 @@
             z-index: 1000;
             text-align: center;
         }
-        .hidden {
-            display: none;
+
+        /* Styling for the modal popup */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
-        /* Estilos para el chat flotante */
+        .modal-content {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+        .close-modal-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        /* Chat container styling */
         #chatContainer {
             position: fixed;
             bottom: 2rem;
@@ -47,243 +83,150 @@
         #chatContainer.show {
             transform: translateY(0);
         }
-        .chat-header {
-            background-color: #1e40af;
-            color: white;
-            padding: 1rem;
-            border-top-left-radius: 1rem;
-            border-top-right-radius: 1rem;
-        }
-        .chat-body {
-            flex-grow: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        .chat-input {
-            padding: 1rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        .chat-message {
-            margin-bottom: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 1rem;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-        .chat-message.self {
-            background-color: #bfdbfe;
-            align-self: flex-end;
-        }
-        .chat-message.other {
-            background-color: #e2e8f0;
-            align-self: flex-start;
-        }
-        .popup-box {
+
+        /* Custom floating message box for the omit image warning */
+        #floatingMessage {
             position: fixed;
-            top: 50%;
+            top: 2rem;
             left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 2rem;
-            background: linear-gradient(145deg, #ffffff, #f0f0f0);
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateX(-50%);
+            background-color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 9999px; /* Pill shape */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: #444;
+            font-weight: 500;
             z-index: 2000;
-            text-align: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
-        .popup-box.visible {
-            opacity: 1;
-            visibility: visible;
+            transition: opacity 0.3s ease-in-out;
         }
     </style>
 </head>
-<body>
-
-    <div id="loadingScreen" class="flex items-center justify-center min-h-screen">
+<body class="flex flex-col items-center min-h-screen">
+    <!-- Main loading screen shown on initial page load -->
+    <div id="loadingScreen" class="flex items-center justify-center min-h-screen w-full">
         <div class="text-center">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-4 border-gray-900 mx-auto"></div>
             <p class="mt-4 text-gray-700">Cargando...</p>
         </div>
     </div>
 
-    <div id="loginRegisterContainer" class="hidden min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">¡Bienvenido!</h1>
-            <p class="text-gray-600 text-center mb-8">Crea una cuenta o inicia sesión para conectarte.</p>
-            <div class="space-y-4">
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="email" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="tu@email.com">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
-                    <input type="password" id="password" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="********">
-                </div>
+    <!-- Main application container, hidden by default -->
+    <div id="mainContainer" class="hidden w-full max-w-4xl p-4 sm:p-8">
+        <!-- Header with logo and buttons -->
+        <header class="flex flex-col md:flex-row justify-between items-center py-4 px-6 bg-white shadow-md rounded-b-xl mb-6">
+            <h1 class="text-4xl font-extrabold text-blue-600 mb-2 md:mb-0">A3</h1>
+            <div class="flex items-center space-x-4 mt-2 md:mt-0">
+                <button id="createProfileBtn" class="py-2 px-6 rounded-full font-semibold text-white bg-blue-600 hover:bg-blue-700 transition duration-300 shadow-lg">
+                    Crear Perfil
+                </button>
+                <button id="toggleChatBtn" class="py-2 px-6 rounded-full font-semibold text-white bg-green-500 hover:bg-green-600 transition duration-300 shadow-lg">
+                    <i class="fas fa-comment-dots"></i> Chat
+                </button>
+            </div>
+        </header>
+
+        <!-- Container for displaying profiles -->
+        <div id="profilesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Profiles will be dynamically rendered here -->
+            <p class="text-center text-gray-500 col-span-full">Cargando perfiles...</p>
+        </div>
+    </div>
+
+    <!-- Modal for profile creation and login -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeProfileModalBtn" class="close-modal-btn">&times;</button>
+            <h2 id="modalTitle" class="text-3xl font-bold text-center text-gray-800 mb-4">Crea tu Perfil</h2>
+            <p class="text-center text-gray-600 mb-6">Por favor, completa la siguiente información.</p>
+            <form id="profileForm" class="space-y-4">
                 <div>
                     <label for="nickname" class="block text-sm font-medium text-gray-700">Apodo</label>
-                    <input type="text" id="nickname" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: Amig@">
-                </div>
-                <div>
-                    <label for="birthdate" class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-                    <input type="date" id="birthdate" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="nickname" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label for="gender" class="block text-sm font-medium text-gray-700">Género</label>
-                    <select id="gender" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <select id="gender" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Selecciona tu género</option>
                         <option value="Hombre">Hombre</option>
                         <option value="Mujer">Mujer</option>
                     </select>
                 </div>
-                
-                <!-- Campos adicionales para mujeres -->
-                <div id="mujerFields" class="hidden space-y-4">
-                    <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700">Descripción</label>
-                        <textarea id="description" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Escribe algo sobre ti..."></textarea>
-                    </div>
-                    <div>
-                        <label for="age" class="block text-sm font-medium text-gray-700">Edad</label>
-                        <select id="age" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
-                    </div>
-                    <div>
-                        <label for="height" class="block text-sm font-medium text-gray-700">Estatura (cm)</label>
-                        <input type="number" id="height" min="120" max="220" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: 165">
-                    </div>
-                    <div>
-                        <label for="district" class="block text-sm font-medium text-gray-700">Distrito</label>
-                        <select id="district" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
-                    </div>
-                    <div>
-                        <label for="telegram" class="block text-sm font-medium text-gray-700">Enlace de Telegram (Opcional)</label>
-                        <input type="text" id="telegram" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: @tunombredeusuario">
-                    </div>
-                    <div>
-                        <label for="whatsapp" class="block text-sm font-medium text-gray-700">Número de WhatsApp (Opcional)</label>
-                        <input type="tel" id="whatsapp" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: +51 987654321">
-                    </div>
-                    <div class="flex items-center">
-                        <input id="callsOnly" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <label for="callsOnly" class="ml-2 block text-sm text-gray-700">Solo para llamadas</label>
-                    </div>
+                <div>
+                    <label for="age" class="block text-sm font-medium text-gray-700">Edad</label>
+                    <input type="number" id="age" required min="18" max="99" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
-            </div>
-            <div id="messageBox" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center"></div>
-            <div class="mt-6 flex flex-col space-y-3">
-                <button id="registerBtn" class="w-full py-3 px-4 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">Crear Perfil</button>
-                <button id="loginBtn" class="w-full py-3 px-4 rounded-md font-semibold text-blue-600 bg-white border border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">Iniciar Sesión</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="profileListContainer" class="hidden min-h-screen p-4">
-        <header class="flex justify-between items-center py-4 px-6 bg-white shadow-md rounded-b-xl">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Perfiles Disponibles</h1>
-                <p id="currentUserId" class="text-sm text-gray-500 mt-1"></p>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button id="toggleChatBtn" class="py-2 px-4 rounded-md font-semibold text-white bg-green-500 hover:bg-green-600 transition duration-300">
-                    <i class="fas fa-comment-dots"></i> Chat
+                <div>
+                    <label for="district" class="block text-sm font-medium text-gray-700">Distrito de Lima</label>
+                    <select id="district" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                <div>
+                    <label for="height" class="block text-sm font-medium text-gray-700">Estatura (cm)</label>
+                    <input type="number" id="height" required min="120" max="220" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="whatsapp" class="block text-sm font-medium text-gray-700">Número de WhatsApp</label>
+                    <input type="tel" id="whatsapp" placeholder="Ej: 987654321" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="profilePhotos" class="block text-sm font-medium text-gray-700">Fotos del Perfil (hasta 3)</label>
+                    <input type="file" id="profilePhotos" accept="image/png, image/jpeg" multiple class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <div id="imagePreviews" class="flex flex-wrap gap-2 mt-2"></div>
+                </div>
+                <div id="modalMessageBox" class="hidden mt-4 p-3 rounded-lg text-sm text-center"></div>
+                <button type="submit" id="submitProfileBtn" class="w-full py-3 px-4 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                    Guardar Perfil
                 </button>
-                <button id="logoutBtn" class="py-2 px-4 rounded-md font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-300">Cerrar Sesión</button>
-            </div>
-        </header>
-        <div id="profilesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
-            <!-- Los perfiles se renderizarán aquí -->
+            </form>
         </div>
     </div>
 
-    <div id="reportConfirmBox" class="message-box hidden">
-        <h3 class="text-xl font-bold mb-4">Confirmar Reporte</h3>
-        <p class="text-gray-600 mb-6">¿Estás seguro de que quieres reportar este perfil?</p>
-        <div class="flex justify-center space-x-4">
-            <button id="confirmReportBtn" class="py-2 px-4 rounded-md font-semibold text-white bg-red-600 hover:bg-red-700 transition duration-300">Sí, Reportar</button>
-            <button id="cancelReportBtn" class="py-2 px-4 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition duration-300">Cancelar</button>
-        </div>
-    </div>
+    <!-- Floating message box -->
+    <div id="floatingMessage" class="hidden text-center"></div>
 
-    <!-- Mensaje de bienvenida -->
-    <div id="welcomeBox" class="popup-box hidden">
-        <h3 class="text-2xl font-bold mb-2 text-gray-800">¡Bienvenido!</h3>
-        <p id="welcomeMessage" class="text-xl text-gray-600 mb-6"></p>
-        <button id="closeWelcomeBtn" class="py-2 px-6 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 transition duration-300">Empezar</button>
-    </div>
-
-    <!-- Advertencia de seguridad -->
-    <div id="disclaimerBox" class="popup-box hidden">
-        <h3 class="text-2xl font-bold mb-4 text-red-600">¡Advertencia de Seguridad!</h3>
-        <p class="text-gray-700 mb-6">Este sitio web no se responsabiliza por las interacciones entre usuarios. Por tu seguridad, te recomendamos:</p>
-        <ul class="list-disc list-inside text-left text-gray-600 mb-6 space-y-2">
-            <li>No realizar transferencias de dinero.</li>
-            <li>No revelar información bancaria o muy personal.</li>
-            <li>Usar el chat con prudencia.</li>
-        </ul>
-        <button id="closeDisclaimerBtn" class="py-2 px-6 rounded-md font-semibold text-white bg-red-600 hover:bg-red-700 transition duration-300">Entendido</button>
-    </div>
-
+    <!-- Chat container that slides up from the bottom right -->
     <div id="chatContainer" class="hidden">
-        <div class="chat-header flex justify-between items-center">
+        <div class="bg-blue-600 text-white p-4 rounded-t-xl flex justify-between items-center shadow-lg">
             <h3 class="text-lg font-semibold">Chat Público</h3>
-            <button id="closeChatBtn" class="text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
+            <button id="closeChatBtn" class="text-white hover:text-gray-200 text-xl"><i class="fas fa-times"></i></button>
         </div>
-        <div id="chatBody" class="chat-body">
-            <!-- Mensajes se renderizarán aquí -->
+        <div id="chatBody" class="p-4 overflow-y-auto flex-grow bg-gray-50 space-y-3">
+            <!-- Messages will be dynamically rendered here -->
         </div>
-        <div class="chat-input flex space-x-2">
-            <input type="text" id="chatMessageInput" class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Escribe un mensaje...">
-            <button id="sendChatBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300"><i class="fas fa-paper-plane"></i></button>
+        <div class="p-4 border-t border-gray-200 flex items-center space-x-2">
+            <input type="text" id="chatMessageInput" placeholder="Escribe un mensaje..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button id="sendChatBtn" class="bg-blue-600 text-white p-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
     
     <script type="module">
+        // Import necessary Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, onSnapshot, collection, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Establecer el nivel de registro para depuración
+        // Set Firebase logging level to debug for detailed console output
         setLogLevel('debug');
 
-        // Variables globales
+        // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        let app;
+        let auth;
+        let db;
+        let userId = null;
+        let userProfile = null;
+        let isChatOpen = false;
 
-        // Referencias del DOM
+        // Get DOM elements for manipulation
         const loadingScreen = document.getElementById('loadingScreen');
-        const loginRegisterContainer = document.getElementById('loginRegisterContainer');
-        const profileListContainer = document.getElementById('profileListContainer');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const nicknameInput = document.getElementById('nickname');
-        const birthdateInput = document.getElementById('birthdate');
-        const genderSelect = document.getElementById('gender');
-        const registerBtn = document.getElementById('registerBtn');
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const profilesGrid = document.getElementById('profilesGrid');
-        const messageBox = document.getElementById('messageBox');
-        const currentUserIdDisplay = document.getElementById('currentUserId');
-        const mujerFields = document.getElementById('mujerFields');
-        const descriptionInput = document.getElementById('description');
-        const ageSelect = document.getElementById('age');
-        const heightInput = document.getElementById('height');
-        const districtSelect = document.getElementById('district');
-        const telegramInput = document.getElementById('telegram');
-        const whatsappInput = document.getElementById('whatsapp');
-        const callsOnlyCheckbox = document.getElementById('callsOnly');
-        const reportConfirmBox = document.getElementById('reportConfirmBox');
-        const confirmReportBtn = document.getElementById('confirmReportBtn');
-        const cancelReportBtn = document.getElementById('cancelReportBtn');
+        const mainContainer = document.getElementById('mainContainer');
+        const profilesList = document.getElementById('profilesList');
+        const createProfileBtn = document.getElementById('createProfileBtn');
         const toggleChatBtn = document.getElementById('toggleChatBtn');
         const chatContainer = document.getElementById('chatContainer');
         const closeChatBtn = document.getElementById('closeChatBtn');
@@ -291,18 +234,23 @@
         const chatMessageInput = document.getElementById('chatMessageInput');
         const sendChatBtn = document.getElementById('sendChatBtn');
 
-        // Referencias de los nuevos elementos
-        const welcomeBox = document.getElementById('welcomeBox');
-        const welcomeMessageElement = document.getElementById('welcomeMessage');
-        const closeWelcomeBtn = document.getElementById('closeWelcomeBtn');
-        const disclaimerBox = document.getElementById('disclaimerBox');
-        const closeDisclaimerBtn = document.getElementById('closeDisclaimerBtn');
+        // Modal elements
+        const profileModal = document.getElementById('profileModal');
+        const closeProfileModalBtn = document.getElementById('closeProfileModalBtn');
+        const profileForm = document.getElementById('profileForm');
+        const nicknameInput = document.getElementById('nickname');
+        const genderSelect = document.getElementById('gender');
+        const ageInput = document.getElementById('age');
+        const districtSelect = document.getElementById('district');
+        const heightInput = document.getElementById('height');
+        const whatsappInput = document.getElementById('whatsapp');
+        const profilePhotosInput = document.getElementById('profilePhotos');
+        const imagePreviewsContainer = document.getElementById('imagePreviews');
+        const modalMessageBox = document.getElementById('modalMessageBox');
+        const floatingMessageEl = document.getElementById('floatingMessage');
 
-        let userProfileData = null;
-        let profileToReportId = null;
-        let isChatOpen = false;
 
-        // Lista de distritos de Lima y Callao
+        // List of districts in Lima
         const limaDistricts = [
             "Ancón", "Ate", "Barranco", "Breña", "Carabayllo", "Chaclacayo", "Chorrillos", "Cieneguilla",
             "Comas", "El Agustino", "Independencia", "Jesús María", "La Molina", "La Victoria", "Lince",
@@ -311,354 +259,275 @@
             "San Bartolo", "San Borja", "San Isidro", "San Juan de Lurigancho", "San Juan de Miraflores",
             "San Luis", "San Martín de Porres", "San Miguel", "Santa Anita", "Santa María del Mar",
             "Santa Rosa", "Santiago de Surco", "Surquillo", "Villa El Salvador", "Villa María del Triunfo"
-        ];
+        ].sort();
 
-        const callaoDistricts = [
-            "Bellavista", "Callao", "Carmen de la Legua-Reynoso", "La Perla", "La Punta", "Ventanilla", "Mi Perú"
-        ];
-
-        // Llenar los menús desplegables
-        function populateSelects() {
-            // Edad
-            for (let i = 18; i <= 45; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = i;
-                ageSelect.appendChild(option);
-            }
-
-            // Distritos
-            const allDistricts = [...limaDistricts, ...callaoDistricts].sort();
-            allDistricts.forEach(district => {
+        // Function to populate the districts dropdown
+        function populateDistricts() {
+            districtSelect.innerHTML = `<option value="">Selecciona tu distrito</option>`;
+            limaDistricts.forEach(district => {
                 const option = document.createElement('option');
                 option.value = district;
                 option.textContent = district;
                 districtSelect.appendChild(option);
             });
         }
-        populateSelects();
-
-        // Función para mostrar un mensaje
-        function showMessage(message, isError = true) {
-            messageBox.textContent = message;
-            messageBox.classList.remove('hidden');
+        
+        // Show a custom message in the modal
+        function showModalMessage(message, isError = true) {
+            modalMessageBox.textContent = message;
+            modalMessageBox.classList.remove('hidden');
             if (isError) {
-                messageBox.classList.remove('bg-green-100', 'text-green-700');
-                messageBox.classList.add('bg-red-100', 'text-red-700');
+                modalMessageBox.classList.remove('bg-green-100', 'text-green-700');
+                modalMessageBox.classList.add('bg-red-100', 'text-red-700');
             } else {
-                messageBox.classList.remove('bg-red-100', 'text-red-700');
-                messageBox.classList.add('bg-green-100', 'text-green-700');
+                modalMessageBox.classList.remove('bg-red-100', 'text-red-700');
+                modalMessageBox.classList.add('bg-green-100', 'text-green-700');
             }
+        }
+
+        // Show a custom floating message on the top of the screen
+        function showFloatingMessage(message) {
+            floatingMessageEl.textContent = message;
+            floatingMessageEl.classList.remove('hidden', 'opacity-0');
+            floatingMessageEl.classList.add('opacity-100');
             setTimeout(() => {
-                messageBox.classList.add('hidden');
+                floatingMessageEl.classList.remove('opacity-100');
+                floatingMessageEl.classList.add('opacity-0');
+                setTimeout(() => floatingMessageEl.classList.add('hidden'), 300);
             }, 5000);
         }
 
-        // Función para validar la edad
-        const isAdult = (birthdateStr) => {
-            const birthdate = new Date(birthdateStr);
-            const today = new Date();
-            let age = today.getFullYear() - birthdate.getFullYear();
-            const m = today.getMonth() - birthdate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
-                age--;
-            }
-            return age >= 18;
-        };
+        // Initialize Firebase and set up authentication listener
+        async function initializeFirebase() {
+            try {
+                if (!firebaseConfig) throw new Error("Firebase configuration is missing.");
 
-        // Escuchar el estado de autenticación
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    // El usuario está autenticado, intentar obtener su perfil
-                    const userProfileRef = doc(db, `/artifacts/${appId}/public/data/profiles`, user.uid);
-                    const docSnap = await getDoc(userProfileRef);
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-                    if (docSnap.exists()) {
-                        userProfileData = docSnap.data();
-                        showMainApp(user.uid);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        await fetchUserProfile(user.uid);
                     } else {
-                        // Perfil no encontrado, mostrar la pantalla de registro
-                        showLoginRegister();
+                        // Sign in anonymously if no user is found
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
                     }
-                } catch (error) {
-                    console.error("Error al obtener el perfil del usuario:", error);
-                    showLoginRegister();
-                }
-            } else {
-                showLoginRegister();
+                    // Hide loading screen and show the main app
+                    loadingScreen.classList.add('hidden');
+                    mainContainer.classList.remove('hidden');
+                });
+            } catch (e) {
+                console.error("Firebase initialization or authentication error:", e);
+                loadingScreen.innerHTML = `<p class="text-red-500 font-bold">Error de inicialización: ${e.message}</p>`;
             }
-            loadingScreen.classList.add('hidden');
-        });
-
-        // Autenticación inicial con token o anónima
-        const initialAuth = async () => {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Error en la autenticación inicial:", error);
-                await signInAnonymously(auth);
-            }
-        };
-        initialAuth();
-
-        // Funciones para alternar vistas
-        function showMainApp(userId) {
-            loginRegisterContainer.classList.add('hidden');
-            profileListContainer.classList.remove('hidden');
-            currentUserIdDisplay.textContent = `Tu ID de usuario: ${userId}`;
-            setupProfileListener();
-            setupChatListener();
-            showWelcomeAndDisclaimer();
         }
 
-        function showLoginRegister() {
-            loginRegisterContainer.classList.remove('hidden');
-            profileListContainer.classList.add('hidden');
-            userProfileData = null;
+        // Fetch the user's own profile after authentication
+        async function fetchUserProfile(uid) {
+            const userProfileRef = doc(db, `/artifacts/${appId}/public/data/profiles`, uid);
+            const docSnap = await getDoc(userProfileRef);
+            if (docSnap.exists()) {
+                userProfile = docSnap.data();
+                createProfileBtn.textContent = 'Mi Perfil';
+                toggleChatBtn.disabled = false;
+                setupProfileListener();
+                setupChatListener();
+            } else {
+                userProfile = null;
+                createProfileBtn.textContent = 'Crear Perfil';
+                toggleChatBtn.disabled = true;
+                // If the user has no profile, show all "Mujer" profiles to all anonymous users
+                setupProfileListener('Mujer');
+            }
         }
 
-        // Mostrar/ocultar campos adicionales para mujeres
-        genderSelect.addEventListener('change', () => {
-            if (genderSelect.value === 'Mujer') {
-                mujerFields.classList.remove('hidden');
+        // Set up real-time listener for profiles based on user's gender
+        function setupProfileListener(filterGender = null) {
+            let profilesQuery;
+            const profilesCollectionPath = `/artifacts/${appId}/public/data/profiles`;
+            if (filterGender) {
+                // For anonymous users, show only female profiles
+                profilesQuery = query(collection(db, profilesCollectionPath), where("gender", "==", filterGender));
+            } else if (userProfile) {
+                // For logged-in users with a profile, show the opposite gender
+                const oppositeGender = userProfile.gender === 'Hombre' ? 'Mujer' : 'Hombre';
+                profilesQuery = query(collection(db, profilesCollectionPath), where("gender", "==", oppositeGender));
             } else {
-                mujerFields.classList.add('hidden');
-            }
-        });
-
-        // Manejar el registro de nuevos perfiles
-        registerBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            const nickname = nicknameInput.value;
-            const birthdate = birthdateInput.value;
-            const gender = genderSelect.value;
-            
-            if (!email || !password || !birthdate || !nickname) {
-                showMessage("Por favor, completa todos los campos.");
-                return;
+                // Fallback, should not be reached but good practice
+                profilesQuery = query(collection(db, profilesCollectionPath));
             }
 
-            if (!isAdult(birthdate)) {
-                showMessage("Debes ser mayor de 18 años para crear un perfil.");
-                return;
-            }
+            onSnapshot(profilesQuery, (snapshot) => {
+                const profiles = [];
+                snapshot.forEach(doc => {
+                    // Do not show the user's own profile in the list
+                    if (doc.id !== userId) {
+                         profiles.push({ id: doc.id, ...doc.data() });
+                    }
+                });
+                renderProfiles(profiles);
+            }, (error) => {
+                console.error("Error al obtener los perfiles:", error);
+                profilesList.innerHTML = `<p class="text-center text-red-500 col-span-full">Error de permisos: ${error.message}</p>`;
+            });
+        }
 
-            // Validar campos adicionales si el género es Mujer
-            if (gender === 'Mujer') {
-                const age = ageSelect.value;
-                const height = heightInput.value;
-                const district = districtSelect.value;
-
-                if (!age || !height || !district) {
-                    showMessage("Por favor, completa todos los campos del perfil.");
-                    return;
-                }
-                if (height < 120 || height > 220) {
-                    showMessage("La estatura debe estar entre 120 cm y 220 cm.");
-                    return;
-                }
-            }
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                const profileData = {
-                    email: email,
-                    nickname: nickname,
-                    gender: gender,
-                    birthdate: birthdate,
-                    createdAt: new Date().toISOString()
-                };
-
-                // Añadir campos adicionales si el género es Mujer
-                if (gender === 'Mujer') {
-                    profileData.description = descriptionInput.value;
-                    profileData.age = ageSelect.value;
-                    profileData.height = heightInput.value;
-                    profileData.district = districtSelect.value;
-                    profileData.telegram = telegramInput.value;
-                    profileData.whatsapp = whatsappInput.value;
-                    profileData.callsOnly = callsOnlyCheckbox.checked;
-                }
-
-                await setDoc(doc(db, `/artifacts/${appId}/public/data/profiles`, user.uid), profileData);
-                showMessage("Perfil creado exitosamente.", false);
-            } catch (error) {
-                console.error("Error al crear el perfil:", error);
-                let errorMessage = "Ocurrió un error. Intenta de nuevo.";
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = "El email ya está en uso. Intenta iniciar sesión.";
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    errorMessage = "Error de autenticación. Por favor, habilite el método de inicio de sesión por 'Correo electrónico/Contraseña' en la consola de su proyecto de Firebase.";
-                }
-                showMessage(errorMessage);
-            }
-        });
-
-        // Manejar el inicio de sesión
-        loginBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-
-            if (!email || !password) {
-                showMessage("Por favor, ingresa tu email y contraseña.");
-                return;
-            }
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showMessage("Sesión iniciada exitosamente.", false);
-            } catch (error) {
-                console.error("Error al iniciar sesión:", error);
-                let errorMessage = "Email o contraseña incorrectos.";
-                if (error.code === 'auth/operation-not-allowed') {
-                    errorMessage = "Error de autenticación. Por favor, habilite el método de inicio de sesión por 'Correo electrónico/Contraseña' en la consola de su proyecto de Firebase.";
-                }
-                showMessage(errorMessage);
-            }
-        });
-
-        // Manejar el cierre de sesión
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                console.log("Sesión cerrada");
-                profilesGrid.innerHTML = '';
-            } catch (error) {
-                console.error("Error al cerrar sesión:", error);
-            }
-        });
-
-        // Función para renderizar los perfiles
+        // Render the profiles to the UI
         function renderProfiles(profiles) {
-            profilesGrid.innerHTML = '';
-            const fragment = document.createDocumentFragment();
+            profilesList.innerHTML = '';
+            if (profiles.length === 0) {
+                profilesList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No hay perfiles para mostrar.</p>`;
+                return;
+            }
 
             profiles.forEach(profile => {
                 const profileCard = document.createElement('div');
-                profileCard.className = 'bg-white p-6 rounded-xl shadow-md flex flex-col transition-transform transform hover:scale-105 duration-300';
+                profileCard.className = 'bg-white p-6 rounded-2xl shadow-lg transition-transform hover:scale-105 duration-300 transform flex flex-col items-center text-center';
                 
-                let contactInfo = '';
-                if (profile.gender === 'Mujer') {
-                    contactInfo = `
-                        <p class="text-gray-600 mt-2">Edad: ${profile.age} años</p>
-                        <p class="text-gray-600">Estatura: ${profile.height} cm</p>
-                        <p class="text-gray-600">Distrito: ${profile.district}</p>
-                        ${profile.description ? `<p class="text-gray-600 mt-2 italic">"${profile.description}"</p>` : ''}
-                        <div class="mt-4 flex items-center space-x-2">
-                            ${profile.telegram ? `<a href="https://t.me/${profile.telegram.replace('@', '')}" target="_blank" class="text-blue-500 hover:text-blue-700 transition duration-300"><i class="fab fa-telegram fa-2x"></i></a>` : ''}
-                            ${profile.whatsapp ? `<a href="https://wa.me/${profile.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="text-green-500 hover:text-green-700 transition duration-300"><i class="fab fa-whatsapp fa-2x"></i></a>` : ''}
-                            ${profile.whatsapp && profile.callsOnly ? `<span class="text-sm text-gray-500">(Solo llamadas)</span>` : ''}
+                // Determine which image(s) to show
+                let profileImageHtml;
+                if (profile.images && profile.images.length > 0) {
+                    profileImageHtml = `
+                        <div class="flex justify-center -space-x-4 mb-4">
+                            ${profile.images.slice(0, 3).map(imgBase64 => `
+                                <img class="w-24 h-24 rounded-full border-4 border-white object-cover" src="${imgBase64}" alt="Foto de perfil de ${profile.nickname}">
+                            `).join('')}
                         </div>
+                    `;
+                } else {
+                    profileImageHtml = `
+                        <img class="w-24 h-24 rounded-full border-4 border-blue-200" src="https://placehold.co/100x100/e0e7ff/4338ca?text=${profile.nickname.charAt(0).toUpperCase()}" alt="Avatar de ${profile.nickname}">
                     `;
                 }
 
+                const whatsappUrl = profile.whatsapp ? `https://wa.me/${profile.whatsapp.replace(/\D/g, '')}` : '#';
+                const whatsappButton = profile.whatsapp ? `
+                    <a href="${whatsappUrl}" target="_blank" class="mt-4 px-6 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600 transition-colors">
+                        <i class="fab fa-whatsapp mr-2"></i> Chatear
+                    </a>
+                ` : '';
+
                 profileCard.innerHTML = `
-                    <div class="flex items-center space-x-4 mb-4">
-                        <img class="w-16 h-16 rounded-full border-2 border-gray-200" src="https://placehold.co/150x150/e0e7ff/4338ca?text=${profile.nickname.charAt(0).toUpperCase()}" alt="Avatar de ${profile.nickname}">
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-800">${profile.nickname}</h2>
-                            <p class="text-sm text-gray-500">${profile.email}</p>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mt-2">Género: ${profile.gender}</p>
-                    ${contactInfo}
-                    <div class="mt-auto pt-4 flex justify-between items-center">
-                        <p class="text-sm text-gray-400">ID: ${profile.id.substring(0, 8)}...</p>
-                        <button class="report-btn text-red-500 hover:text-red-700 transition duration-300" data-profile-id="${profile.id}">
-                            <i class="fas fa-flag"></i>
-                        </button>
-                    </div>
+                    ${profileImageHtml}
+                    <h3 class="mt-4 text-xl font-bold text-gray-800">${profile.nickname}</h3>
+                    <p class="text-gray-500 text-sm">${profile.gender}</p>
+                    <ul class="mt-4 text-gray-700 text-sm space-y-1">
+                        <li><span class="font-semibold">Edad:</span> ${profile.age} años</li>
+                        <li><span class="font-semibold">Distrito:</span> ${profile.district}</li>
+                        <li><span class="font-semibold">Estatura:</span> ${profile.height} cm</li>
+                    </ul>
+                    ${whatsappButton}
                 `;
-                fragment.appendChild(profileCard);
-            });
-
-            profilesGrid.appendChild(fragment);
-
-            // Agregar listeners para los botones de reportar
-            document.querySelectorAll('.report-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    profileToReportId = e.currentTarget.dataset.profileId;
-                    reportConfirmBox.classList.remove('hidden');
-                });
+                profilesList.appendChild(profileCard);
             });
         }
 
-        // Configurar el listener para los perfiles en tiempo real
-        function setupProfileListener() {
-            const profilesCollectionRef = collection(db, `/artifacts/${appId}/public/data/profiles`);
-            const q = query(profilesCollectionRef);
+        // Handle image previews before form submission
+        profilePhotosInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            imagePreviewsContainer.innerHTML = ''; // Clear previous previews
+            if (files.length > 3) {
+                showModalMessage("Solo puedes subir un máximo de 3 fotos.");
+                profilePhotosInput.value = ''; // Reset the input
+                return;
+            }
 
-            onSnapshot(q, (snapshot) => {
-                const allProfiles = [];
-                snapshot.forEach((doc) => {
-                    // Excluir el perfil del usuario actual de la lista
-                    if (doc.id !== auth.currentUser.uid) {
-                        allProfiles.push({ id: doc.id, ...doc.data() });
-                    }
-                });
-                
-                let filteredProfiles = [];
-                if (userProfileData && userProfileData.gender === 'Hombre') {
-                    // Si el usuario es hombre, solo puede ver perfiles de mujeres
-                    filteredProfiles = allProfiles.filter(profile => profile.gender === 'Mujer');
-                } else if (userProfileData && userProfileData.gender === 'Mujer') {
-                    // Si el usuario es mujer, puede ver perfiles de hombres y mujeres
-                    filteredProfiles = allProfiles;
-                } else {
-                    // En caso de que el perfil del usuario no esté disponible, no mostrar nada
-                    filteredProfiles = [];
-                }
-
-                renderProfiles(filteredProfiles);
-            }, (error) => {
-                console.error("Error al obtener los perfiles:", error);
-                showMessage("No se pudieron cargar los perfiles. Inténtalo de nuevo.");
-            });
-        }
-
-        // Manejar la confirmación de reporte
-        confirmReportBtn.addEventListener('click', async () => {
-            if (profileToReportId) {
-                try {
-                    await addDoc(collection(db, `/artifacts/${appId}/public/data/reports`), {
-                        reportedProfileId: profileToReportId,
-                        reporterUserId: auth.currentUser.uid,
-                        timestamp: new Date().toISOString()
-                    });
-                    showMessage("Perfil reportado exitosamente.", false);
-                } catch (error) {
-                    console.error("Error al reportar el perfil:", error);
-                    showMessage("No se pudo enviar el reporte. Inténtalo de nuevo.");
-                } finally {
-                    reportConfirmBox.classList.add('hidden');
-                    profileToReportId = null;
-                }
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-16 h-16 object-cover rounded-md shadow-md';
+                    imagePreviewsContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
             }
         });
 
-        // Manejar la cancelación del reporte
-        cancelReportBtn.addEventListener('click', () => {
-            reportConfirmBox.classList.add('hidden');
-            profileToReportId = null;
+        // Show/hide the profile creation modal
+        createProfileBtn.addEventListener('click', () => {
+            populateDistricts();
+            profileModal.classList.remove('hidden');
+            modalMessageBox.classList.add('hidden');
         });
 
-        // Lógica del chat
+        closeProfileModalBtn.addEventListener('click', () => {
+            profileModal.classList.add('hidden');
+        });
+
+        // Handle profile form submission
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const files = profilePhotosInput.files;
+            const images = [];
+
+            // If no images are selected, show a floating message
+            if (files.length === 0) {
+                showFloatingMessage("¡Tu perfil es más atractivo con fotos! Considera agregar al menos una.");
+            }
+
+            // Read selected files and convert them to Base64 strings
+            const readPromises = Array.from(files).map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            try {
+                // Wait for all files to be read
+                const base64Images = await Promise.all(readPromises);
+
+                const profileData = {
+                    nickname: nicknameInput.value.trim(),
+                    gender: genderSelect.value,
+                    age: parseInt(ageInput.value),
+                    district: districtSelect.value,
+                    height: parseInt(heightInput.value),
+                    whatsapp: whatsappInput.value.trim(),
+                    images: base64Images, // Store the Base64 image data
+                    createdAt: serverTimestamp()
+                };
+
+                // Basic validation
+                if (!profileData.nickname || !profileData.gender || !profileData.age || !profileData.district || !profileData.height) {
+                    showModalMessage("Por favor, completa todos los campos requeridos.");
+                    return;
+                }
+                if (profileData.age < 18) {
+                    showModalMessage("Debes ser mayor de 18 años para crear un perfil.");
+                    return;
+                }
+
+                const profileRef = doc(db, `/artifacts/${appId}/public/data/profiles`, userId);
+                await setDoc(profileRef, profileData, { merge: true });
+                showModalMessage("Perfil creado exitosamente.", false);
+                profileModal.classList.add('hidden');
+                // The onAuthStateChanged listener will automatically fetch the new profile and update the UI
+            } catch (error) {
+                console.error("Error al crear el perfil:", error);
+                showModalMessage(`Error al guardar el perfil: ${error.message}`);
+            }
+        });
+
+        // Chat functionality
         toggleChatBtn.addEventListener('click', () => {
             isChatOpen = !isChatOpen;
-            chatContainer.classList.toggle('show');
             if (isChatOpen) {
                 chatContainer.classList.remove('hidden');
-                chatBody.scrollTop = chatBody.scrollHeight; // Desplazarse al final
+                setTimeout(() => chatContainer.classList.add('show'), 10);
+                chatBody.scrollTop = chatBody.scrollHeight;
             } else {
-                 setTimeout(() => chatContainer.classList.add('hidden'), 300);
+                chatContainer.classList.remove('show');
+                setTimeout(() => chatContainer.classList.add('hidden'), 300);
             }
         });
 
@@ -677,76 +546,45 @@
 
         async function sendMessage() {
             const messageText = chatMessageInput.value.trim();
-            if (messageText === '') return;
-
+            if (messageText === '' || !userProfile) return;
+            
             try {
                 await addDoc(collection(db, `/artifacts/${appId}/public/data/chat`), {
-                    userId: auth.currentUser.uid,
-                    nickname: userProfileData.nickname,
+                    userId: userId,
+                    nickname: userProfile.nickname,
                     message: messageText,
                     timestamp: serverTimestamp()
                 });
                 chatMessageInput.value = '';
-                chatBody.scrollTop = chatBody.scrollHeight; // Desplazarse al final
+                chatBody.scrollTop = chatBody.scrollHeight;
             } catch (error) {
                 console.error("Error al enviar el mensaje:", error);
-                showMessage("No se pudo enviar el mensaje.", true);
             }
         }
-
+        
         function setupChatListener() {
-            const chatCollectionRef = collection(db, `/artifacts/${appId}/public/data/chat`);
-            const q = query(chatCollectionRef);
-
-            onSnapshot(q, (snapshot) => {
+            onSnapshot(collection(db, `/artifacts/${appId}/public/data/chat`), (snapshot) => {
                 chatBody.innerHTML = '';
                 const messages = [];
-                snapshot.forEach(doc => {
-                    messages.push(doc.data());
-                });
+                snapshot.forEach(doc => messages.push(doc.data()));
+                messages.sort((a, b) => (a.timestamp ? a.timestamp.toMillis() : 0) - (b.timestamp ? b.timestamp.toMillis() : 0));
                 
-                // Ordenar mensajes por timestamp para asegurar el orden correcto
-                messages.sort((a, b) => a.timestamp?.toMillis() - b.timestamp?.toMillis());
-
                 messages.forEach(msg => {
-                    const isSelf = msg.userId === auth.currentUser.uid;
+                    const isSelf = msg.userId === userId;
                     const messageElement = document.createElement('div');
-                    messageElement.className = `chat-message ${isSelf ? 'self' : 'other'}`;
-                    
-                    const senderName = isSelf ? 'Tú' : msg.nickname;
-                    messageElement.innerHTML = `<span class="font-bold">${senderName}:</span> ${msg.message}`;
+                    messageElement.className = `p-2 rounded-xl max-w-[80%] ${isSelf ? 'bg-blue-200 self-end rounded-br-none' : 'bg-gray-200 self-start rounded-bl-none'}`;
+                    const senderName = isSelf ? 'Tú' : (msg.nickname || 'Anónimo');
+                    messageElement.innerHTML = `<p class="font-bold text-sm">${senderName}</p><p>${msg.message}</p>`;
                     chatBody.appendChild(messageElement);
                 });
-
-                // Mantener el chat desplazado hacia abajo
                 chatBody.scrollTop = chatBody.scrollHeight;
             }, (error) => {
                 console.error("Error al obtener los mensajes del chat:", error);
             });
         }
         
-        // Función para mostrar los mensajes de bienvenida y de seguridad
-        function showWelcomeAndDisclaimer() {
-            // Mostrar mensaje de bienvenida
-            welcomeMessageElement.textContent = `¡Nos alegra tenerte aquí, ${userProfileData.nickname}!`;
-            welcomeBox.classList.remove('hidden');
-            setTimeout(() => welcomeBox.classList.add('visible'), 50);
-
-            closeWelcomeBtn.addEventListener('click', () => {
-                welcomeBox.classList.remove('visible');
-                setTimeout(() => {
-                    welcomeBox.classList.add('hidden');
-                    // Después de cerrar el de bienvenida, mostrar el de seguridad
-                    disclaimerBox.classList.remove('hidden');
-                    setTimeout(() => disclaimerBox.classList.add('visible'), 50);
-                }, 500);
-            }, { once: true }); // Usar `once: true` para que el listener se elimine solo
-
-            closeDisclaimerBtn.addEventListener('click', () => {
-                disclaimerBox.classList.remove('visible');
-                setTimeout(() => disclaimerBox.classList.add('hidden'), 500);
-            }, { once: true });
-        }
+        // Start the application after the window loads
+        window.onload = initializeFirebase;
     </script>
 </body>
 </html>
