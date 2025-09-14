@@ -300,7 +300,9 @@
         // Initialize Firebase and set up authentication listener
         async function initializeFirebase() {
             try {
-                if (!firebaseConfig) throw new Error("Firebase configuration is missing.");
+                if (!firebaseConfig) {
+                    throw new Error("Firebase configuration is missing.");
+                }
 
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -520,14 +522,19 @@
 
         // Chat functionality
         toggleChatBtn.addEventListener('click', () => {
-            isChatOpen = !isChatOpen;
-            if (isChatOpen) {
-                chatContainer.classList.remove('hidden');
-                setTimeout(() => chatContainer.classList.add('show'), 10);
-                chatBody.scrollTop = chatBody.scrollHeight;
+            if (userProfile) {
+                isChatOpen = !isChatOpen;
+                if (isChatOpen) {
+                    chatContainer.classList.remove('hidden');
+                    setTimeout(() => chatContainer.classList.add('show'), 10);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                } else {
+                    chatContainer.classList.remove('show');
+                    setTimeout(() => chatContainer.classList.add('hidden'), 300);
+                }
             } else {
-                chatContainer.classList.remove('show');
-                setTimeout(() => chatContainer.classList.add('hidden'), 300);
+                showModalMessage("Por favor, crea un perfil antes de usar el chat.", true);
+                profileModal.classList.remove('hidden');
             }
         });
 
